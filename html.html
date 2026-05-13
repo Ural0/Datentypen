@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C/C++ Sayı Tipleri ve Bit Dünyası</title>
+    <style>
+        :root {
+            --bg: #0b0e14;
+            --card-bg: #161b22;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #2f81f7;
+            --accent-glow: rgba(47, 129, 247, 0.4);
+            --success: #3fb950;
+            --error: #f85149;
+            --border: #30363d;
+            --bit-zero: #21262d;
+            --bit-one: #1f6feb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        .tip-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .tip-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .tip-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .tip-btn span {
+            display: block;
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .main-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border);
+        }
+
+        .display-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        input {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-size: 24px;
+            padding: 10px;
+            border-radius: 6px;
+            width: 400px;
+            max-width: 100%;
+            font-family: monospace;
+        }
+
+        .bit-viewer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            background: #0d1117;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .bit-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bit {
+            width: 24px;
+            height: 34px;
+            background: var(--bit-zero);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .bit.one {
+            background: var(--bit-one);
+            color: white;
+            border-color: #58a6ff;
+        }
+
+        .bit.sign { border: 1px dashed var(--error); }
+        .bit.exponent { border-color: #d29922; }
+
+        .bit-idx {
+            font-size: 9px;
+            color: var(--text-secondary);
+        }
+
+        .byte-sep {
+            width: 10px;
+        }
+
+        .info-footer {
+            margin-top: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .badge {
+            background: #238636;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        .range-box {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            word-break: break-all;
+            background: #0d1117;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .info-footer { grid-template-columns: 1fr; }
+            input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="margin-bottom: 5px;">C/C++ Veri Tipleri Görselleştirici</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 20px;">Bellekteki bit dizilimini ve veri sınırlarını keşfedin.</p>
+
+    <div class="type-grid" id="typeButtons">
+        <!-- Butonlar JS ile dolacak -->
+    </div>
+
+    <div class="main-card">
+        <div class="display-header">
+            <div class="input-group">
+                <label id="inputLabel">Decimal Değer</label>
+                <input type="text" id="mainInput" value="0">
+            </div>
+            <div style="text-align: right;">
+                <span id="typeName" style="font-weight: bold; color: var(--accent);">int</span>
+                <span id="bitCount" class="badge">32 bit</span>
+            </div>
+        </div>
+
+        <div class="bit-viewer" id="bitViewer"></div>
+        
+        <div class="info-footer">
+            <div>
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--accent);">Tip Açıklaması</h4>
+                <p id="typeDesc" style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;"></p>
+            </div>
+            <div>
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--accent);">Değer Aralığı</h4>
+                <div id="rangeInfo" class="range-box"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const types = {
+        'char': { bits: 8, signed: true, desc: "Genellikle bir karakter (ASCII) saklar. En küçük adreslenebilir birimdir." },
+        'unsigned char': { bits: 8, signed: false, desc: "0-255 arası değer alır. Ham veri (raw data) işlemleri için kullanılır." },
+        'short': { bits: 16, signed: true, desc: "Küçük tam sayılar için bellek tasarrufu sağlar." },
+        'unsigned short': { bits: 16, signed: false, desc: "Pozitif küçük tam sayılar için kullanılır." },
+        'int': { bits: 32, signed: true, desc: "Modern sistemlerde varsayılan tam sayı tipidir." },
+        'unsigned int': { bits: 32, signed: false, desc: "Sadece pozitif büyük tam sayılar. Sayaçlar için idealdir." },
+        'long': { bits: 32, signed: true, desc: "Sisteme göre değişebilir (Windows'ta 32, Linux'ta 64 bit olabilir). Burada 32 bit baz alınmıştır." },
+        'unsigned long': { bits: 32, signed: false, desc: "Büyük pozitif tam sayılar." },
+        'long long': { bits: 64, signed: true, desc: "Çok büyük tam sayılar. 64-bit genişliktedir." },
+        'unsigned long long': { bits: 64, signed: false, desc: "Maksimum kapasiteli pozitif tam sayı tipi." },
+        'float': { bits: 32, isFloat: true, desc: "32-bit kayan noktalı sayı. Hassasiyet yaklaşıktır (7 basamak)." },
+        'double': { bits: 64, isFloat: true, desc: "64-bit yüksek hassasiyetli kayan noktalı sayı (15-17 basamak)." }
+    };
+
+    let activeType = 'int';
+    let bits = [];
+
+    function init() {
+        const btnContainer = document.getElementById('typeButtons');
+        for (let key in types) {
+            const btn = document.createElement('button');
+            btn.className = `tip-btn ${key === activeType ? 'active' : ''}`;
+            btn.innerHTML = `${key} <span>${types[key].bits} bit</span>`;
+            btn.onclick = () => setType(key);
+            btnContainer.appendChild(btn);
+        }
+        updateDisplay();
+    }
+
+    function setType(key) {
+        activeType = key;
+        document.querySelectorAll('.tip-btn').forEach(b => b.classList.toggle('active', b.innerText.startsWith(key)));
+        document.getElementById('mainInput').value = types[key].isFloat ? "3.1415" : "42";
+        updateDisplay();
+    }
+
+    function updateDisplay() {
+        const t = types[activeType];
+        const input = document.getElementById('mainInput');
+        let val = input.value;
+
+        // Bitleri hesapla
+        if (t.isFloat) {
+            bits = floatToBits(parseFloat(val || 0), t.bits);
+        } else {
+            bits = intToBits(val || 0, t.bits, t.signed);
+        }
+
+        renderBits();
+        updateMetadata();
+    }
+
+    function intToBits(val, size, signed) {
+        try {
+            let n = BigInt(val);
+            const limit = BigInt(2) ** BigInt(size);
+            
+            if (signed) {
+                const max = (BigInt(2) ** BigInt(size - 1)) - 1n;
+                const min = -(BigInt(2) ** BigInt(size - 1));
+                if (n > max) n = max;
+                if (n < min) n = min;
+                if (n < 0n) n = limit + n;
+            } else {
+                const max = limit - 1n;
+                if (n > max) n = max;
+                if (n < 0n) n = 0n;
+            }
+
+            return n.toString(2).padStart(size, '0').slice(-size).split('').map(Number);
+        } catch { return new Array(size).fill(0); }
+    }
+
+    function floatToBits(f, size) {
+        const buf = new ArrayBuffer(size / 8);
+        const view = new DataView(buf);
+        if (size === 32) view.setFloat32(0, f);
+        else view.setFloat64(0, f);
+        
+        let binary = "";
+        for (let i = 0; i < size / 8; i++) {
+            binary += view.getUint8(i).toString(2).padStart(8, '0');
+        }
+        return binary.split('').map(Number);
+    }
+
+    function bitsToDecimal() {
+        const t = types[activeType];
+        if (t.isFloat) {
+            const buf = new ArrayBuffer(t.bits / 8);
+            const view = new DataView(buf);
+            for (let i = 0; i < t.bits / 8; i++) {
+                const byteStr = bits.slice(i * 8, i * 8 + 8).join('');
+                view.setUint8(i, parseInt(byteStr, 2));
+            }
+            return t.bits === 32 ? view.getFloat32(0) : view.getFloat64(0);
+        } else {
+            let binaryStr = bits.join('');
+            let n = BigInt("0b" + binaryStr);
+            if (t.signed && bits[0] === 1) {
+                n = n - (BigInt(2) ** BigInt(t.bits));
+            }
+            return n.toString();
+        }
+    }
+
+    function renderBits() {
+        const viewer = document.getElementById('bitViewer');
+        viewer.innerHTML = '';
+        const t = types[activeType];
+
+        bits.forEach((b, i) => {
+            const box = document.createElement('div');
+            box.className = 'bit-box';
+
+            const bit = document.createElement('div');
+            bit.className = `bit ${b === 1 ? 'one' : ''}`;
+            
+            // Renklendirme mantığı
+            if (t.isFloat) {
+                if (i === 0) bit.classList.add('sign');
+                else if (i <= (t.bits === 32 ? 8 : 11)) bit.classList.add('exponent');
+            } else if (t.signed && i === 0) {
+                bit.classList.add('sign');
+            }
+
+            bit.textContent = b;
+            bit.onclick = () => {
+                bits[i] = bits[i] === 1 ? 0 : 1;
+                document.getElementById('mainInput').value = bitsToDecimal();
+                renderBits();
+            };
+
+            const idx = document.createElement('span');
+            idx.className = 'bit-idx';
+            idx.textContent = t.bits - 1 - i;
+
+            box.appendChild(bit);
+            box.appendChild(idx);
+            viewer.appendChild(box);
+
+            if ((i + 1) % 8 === 0 && i !== bits.length - 1) {
+                const sep = document.createElement('div');
+                sep.className = 'byte-sep';
+                viewer.appendChild(sep);
+            }
+        });
+    }
+
+    function updateMetadata() {
+        const t = types[activeType];
+        document.getElementById('typeName').textContent = activeType;
+        document.getElementById('bitCount').textContent = t.bits + " bit";
+        document.getElementById('typeDesc').textContent = t.desc;
+        
+        let range = "";
+        if (t.isFloat) {
+            range = t.bits === 32 ? "±1.18e-38 ile ±3.4e38" : "±2.23e-308 ile ±1.8e308";
+        } else {
+            const min = t.signed ? -(BigInt(2) ** BigInt(t.bits - 1)) : 0n;
+            const max = t.signed ? (BigInt(2) ** BigInt(t.bits - 1)) - 1n : (BigInt(2) ** BigInt(t.bits)) - 1n;
+            range = `${min.toLocaleString()} \narasında\n ${max.toLocaleString()}`;
+        }
+        document.getElementById('rangeInfo').innerText = range;
+    }
+
+    document.getElementById('mainInput').oninput = updateDisplay;
+
+    init();
+</script>
+
+</body>
+</html>
